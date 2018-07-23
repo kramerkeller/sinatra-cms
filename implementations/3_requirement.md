@@ -16,6 +16,6 @@
 * Create get route for file names "/files/:filename"
 
 * If file name doest not exist
-  * Render error and redirect to main page
+  * Render error and redirect to main page (saving this for later)
 * If filename exists
   * Render the file as text in the browser
