@@ -1,0 +1,7 @@
+<p>Edit content of <%= @filename %>:</p>
+
+<textarea rows="20" cols="50" name="contents" form="edit_form"><%= @contents %></textarea>
+
+<form id ="edit_form" action="/<%= @filename %>" method="post">
+  <input type="submit">
+</form>

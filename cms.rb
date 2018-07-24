@@ -9,27 +9,29 @@ configure do
   set :session_secret, 'super secret'
 end
 
-def file_names
+def filenames
   Dir['files/*'].map { |name| name.gsub("files/", "") }
 end
 
+############## Routes ##################
+
 get '/' do
-  @file_names = file_names
+  @filenames = filenames
 
   erb :files
 end
 
 get '/:filename' do
-  file_name = params[:filename]
-  error = !file_names.include?(file_name)
-  
+  filename = params[:filename]
+  error = !filenames.include?(filename)
+
   if error
-    session[:error] = "#{file_name} does not exist"
+    session[:error] = "#{filename} does not exist"
     redirect '/'
   end
 
-  file_ext = file_name.split(".").last
-  file = File.read("files/#{file_name}")
+  file_ext = filename.split(".").last
+  file = File.read("files/#{filename}")
 
   if file_ext == 'md'
     markdown = Redcarpet::Markdown.new(Redcarpet::Render::HTML)
@@ -38,4 +40,21 @@ get '/:filename' do
     headers["Content-Type"] = "text/plain"
     file
   end
+end
+
+get '/:filename/edit' do
+  @filename = params[:filename]
+  @contents = File.read("files/#{@filename}")
+
+  erb :edit_file
+end
+
+post '/:filename' do
+  filename = params[:filename]
+  content = params[:contents]
+
+  File.write("files/#{filename}", content)
+  
+  session[:success] = "#{filename} has been updated"
+  redirect "/"
 end
