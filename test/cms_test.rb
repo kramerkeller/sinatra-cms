@@ -4,6 +4,7 @@ require "minitest/autorun"
 require "minitest/reporters"
 Minitest::Reporters.use!
 require "rack/test"
+require "fileutils"
 
 require_relative "../cms"
 
@@ -14,20 +15,40 @@ class CmsTest < Minitest::Test
     Sinatra::Application
   end
 
+  def setup
+    FileUtils.mkdir_p(path)
+  end
+
+  def teardown
+    FileUtils.rm_rf(path)
+  end
+
+  def create_document(name, content = "")
+    File.open(File.join(path, name), "w") do |file|
+      file.write(content)
+    end
+  end
+
   def test_index
+    create_document "about.md"
+    create_document "changes.txt"
+
     get "/"
+
     assert_equal 200, last_response.status
     assert_equal "text/html;charset=utf-8", last_response["Content-Type"]
     assert_includes last_response.body, "about.md"
     assert_includes last_response.body, "changes.txt"
-    assert_includes last_response.body, "history.txt"
+
   end
 
   def test_viewing_text_document
-    get "/history.txt"
+    create_document "changes.txt"
+
+    get "/changes.txt"
+
     assert_equal 200, last_response.status
     assert_equal "text/plain", last_response["Content-Type"]
-    assert_includes last_response.body, "1993 - Yukihiro Matsumoto dreams up Ruby."
   end
 
   def test_non_existent_file
@@ -41,13 +62,18 @@ class CmsTest < Minitest::Test
   end
 
   def test_viewing_markdown_file
+    create_document "about.md", "# Ruby is..."
+
     get "/about.md"
+
     assert_equal 200, last_response.status
     assert_equal "text/html;charset=utf-8", last_response["Content-Type"]
     assert_includes last_response.body, "<h1>Ruby is...</h1>"
   end
 
   def test_editing_file
+    create_document "changes.txt"
+
     get "/changes.txt/edit"
     assert_equal 200, last_response.status
     assert_includes last_response.body, "Edit content of changes.txt:"
