@@ -26,7 +26,7 @@ end
 get '/' do
   @filenames = filenames
 
-  erb :files
+  erb :files, layout: :layout
 end
 
 get '/:filename' do
@@ -43,7 +43,7 @@ get '/:filename' do
 
   if file_ext == 'md'
     markdown = Redcarpet::Markdown.new(Redcarpet::Render::HTML)
-    markdown.render(file)
+    erb markdown.render(file)
   else
     headers["Content-Type"] = "text/plain"
     file
