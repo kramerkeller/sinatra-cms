@@ -3,7 +3,7 @@
     <li>
         <a href="/<%= filename %>"><%= filename %></a>
         <a href="/<%= filename %>/edit">edit</a>
-        <form action="/<%= filename %>/delete" method="post">
+        <form class="inline" action="/<%= filename %>/delete" method="post">
           <button type="submit">delete</button>
         </form>
     </li>
@@ -11,3 +11,11 @@
 </ul>
 
 <a href="/new">New Document</a>
+
+<p>
+  <% if @username %>
+    Signed in as <%= @username %> <a href="/users/signout">Sign Out</a>
+  <% else %>
+    <a href="/users/signin">Sign In</a>
+  <% end %>
+</p>

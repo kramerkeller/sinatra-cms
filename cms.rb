@@ -25,8 +25,34 @@ end
 
 get '/' do
   @filenames = filenames
+  @username = session[:username] ||= false
 
   erb :files, layout: :layout
+end
+
+get "/users/signin" do
+  erb :signin
+end
+
+post "/users/signin" do
+  @username = params[:username]
+  password = params[:password]
+
+  if @username == 'admin' && password == 'secret'
+    session[:username] = @username
+    session[:success] = "Welcome #{@username}"
+    redirect '/'
+  else
+    session[:error] = "Invalid credentials"
+    status 422
+    erb :signin
+  end
+end
+
+post "/users/signout" do
+  session.delete(:username)
+  session[:success] = "You have been signed out."
+  redirect "/"
 end
 
 # New file form

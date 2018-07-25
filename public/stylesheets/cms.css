@@ -12,3 +12,7 @@ body {
   padding: 10px;
   background: red;
 }
+
+.inline {
+  display: inline;
+}
