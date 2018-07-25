@@ -1,10 +1,10 @@
 ENV["RACK_ENV"] = "test"
 
+require "fileutils"
 require "minitest/autorun"
 require "minitest/reporters"
 Minitest::Reporters.use!
 require "rack/test"
-require "fileutils"
 
 require_relative "../cms"
 
@@ -24,7 +24,8 @@ class CmsTest < Minitest::Test
   end
 
   def create_document(name, content = "")
-    File.open(File.join(path, name), "w") do |file|
+    file_path = path + name
+    File.open(file_path, "w") do |file|
       file.write(content)
     end
   end
@@ -39,7 +40,6 @@ class CmsTest < Minitest::Test
     assert_equal "text/html;charset=utf-8", last_response["Content-Type"]
     assert_includes last_response.body, "about.md"
     assert_includes last_response.body, "changes.txt"
-
   end
 
   def test_viewing_text_document
@@ -81,8 +81,9 @@ class CmsTest < Minitest::Test
     assert_includes last_response.body, %q(<input type="submit")
   end
 
+  # Updating document
   def test_updating_document
-    post "/changes.txt", content: "new content"
+    post "/changes.txt", contents: "new content"
 
     assert_equal 302, last_response.status
 
@@ -93,5 +94,44 @@ class CmsTest < Minitest::Test
     get "/changes.txt"
     assert_equal 200, last_response.status
     assert_includes last_response.body, "new content"
+  end
+
+  def test_view_new_document_form
+    get "/new"
+
+    assert_equal 200, last_response.status
+    assert_includes last_response.body, "<input"
+    assert_includes last_response.body, %q(<button type="submit")
+  end
+
+  def test_create_new_document
+    post "/create", filename: "test.txt"
+    assert_equal 302, last_response.status
+
+    get last_response["Location"]
+    assert_includes last_response.body, "test.txt has been created"
+
+    get "/"
+    assert_includes last_response.body, "test.txt"
+  end
+
+  def test_create_new_document_without_filename
+    post "/create", filename: ""
+    assert_equal 422, last_response.status
+    assert_includes last_response.body, "Name must be 1 - 50 characters"
+  end
+
+  def test_deleting_document
+    create_document("test.txt")
+
+    post "/test.txt/delete"
+
+    assert_equal 302, last_response.status
+
+    get last_response["Location"]
+    assert_includes last_response.body, "test.txt has been deleted"
+
+    get "/"
+    refute_includes last_response.body, "test.txt"
   end
 end

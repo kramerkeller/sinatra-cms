@@ -11,14 +11,14 @@ end
 
 def path
   if ENV["RACK_ENV"] == "test"
-    "files/test/"
+    "test/files/"
   else
     "files/"
   end
 end
 
 def filenames
-  Dir['files/*'].map { |name| name.gsub("files/", "") }
+  Dir[path + '*'].map { |name| name.gsub(path, "") }
 end
 
 ############## Routes ##################
@@ -27,6 +27,27 @@ get '/' do
   @filenames = filenames
 
   erb :files, layout: :layout
+end
+
+# New file form
+get '/new' do
+  erb :new_file
+end
+
+# Create new file
+post '/create' do
+  filename = params[:filename]
+
+  if filename.length == 0
+    session[:error] = "Name must be 1 - 50 characters"
+    status 422
+    erb :new_file
+  else
+    file_path = path + filename
+    File.write(file_path, "")
+    session[:success] = "#{filename} has been created"
+    redirect "/"
+  end
 end
 
 get '/:filename' do
@@ -50,6 +71,7 @@ get '/:filename' do
   end
 end
 
+# Form to update existing file
 get '/:filename/edit' do
   @filename = params[:filename]
   @contents = File.read(path + @filename)
@@ -57,6 +79,7 @@ get '/:filename/edit' do
   erb :edit_file
 end
 
+# Update existing file
 post '/:filename' do
   filename = params[:filename]
   content = params[:contents]
@@ -64,5 +87,12 @@ post '/:filename' do
   File.write(path + filename, content)
 
   session[:success] = "#{filename} has been updated"
+  redirect "/"
+end
+
+post "/:filename/delete" do
+  filename = params[:filename]
+  File.delete(path + filename)
+  session[:success] = "#{filename} has been deleted"
   redirect "/"
 end
